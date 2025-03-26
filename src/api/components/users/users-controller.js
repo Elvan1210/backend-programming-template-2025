@@ -1,6 +1,7 @@
 const usersService = require('./users-service');
 const { errorResponder, errorTypes } = require('../../../core/errors');
 const { hashPassword } = require('../../../utils/password');
+const usersRepository = require('./users-repository');
 
 async function getUsers(request, response, next) {
   try {
@@ -171,7 +172,47 @@ async function changePassword(request, response, next) {
   //
   // If all conditions are met, update the user's password and return
   // a success response.
-  return next(errorResponder(errorTypes.NOT_IMPLEMENTED));
+
+  try {
+    const id = request.params.id;
+    const {
+      old_password: oldPassword,
+      new_password: newPassword,
+      confirm_new_password: confirmNewPassword,
+    } = request.body;
+
+    const user = await User.findById(id);
+    if (!user) {
+      return response.status(404).json({ message: 'User not found',});
+    }
+
+    const isMatch = await passwordMatched(oldPassword, user.password);
+    if (!isMatch) {
+      return response.status(400).json({ message: 'Incorrect old password',});
+    }
+
+    if (newPassword.length < 8) {
+      return response.status(400).json({ message: 'New password must be at least 8 characters long',});
+    }
+
+    if (newPassword === oldPassword) {
+      return response.status(400).json({message: 'New password must be different from the old password',});
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      return response
+        .status(400)
+        .json({ message: 'New password and confirm new password must match' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    response.status(200).json({ message: 'Password updated successfully' });
+  } catch (error) {
+    return next(errorResponder(errorTypes.NOT_IMPLEMENTED));
+  }
 }
 
 async function deleteUser(request, response, next) {
@@ -190,6 +231,16 @@ async function deleteUser(request, response, next) {
     return next(error);
   }
 }
+
+
+
+const getUsers = (req, res) => {
+    const offset = parseInt(req.query.offset) || 0;
+    const limit = parseInt(req.query.limit) || 10;
+    
+    const users = usersRepository.getUsers(offset, limit);
+    res.json(users);
+};
 
 module.exports = {
   getUsers,

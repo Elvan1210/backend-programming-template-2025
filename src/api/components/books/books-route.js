@@ -4,11 +4,12 @@ const booksController = require('./books-controller');
 
 const route = express.Router();
 
+route.get('/', booksController.getBooks);
+
 module.exports = (app) => {
   app.use('/books', route);
 
   // Get list of books
-  route.get('/', booksController.getBooks);
 
   // Create a new book
   route.post('/', booksController.createBook);
@@ -18,4 +19,5 @@ module.exports = (app) => {
   // TODO: Update a book by id
 
   // TODO: Delete a book by id
+  app.use('/api/users', router);
 };

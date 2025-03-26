@@ -1,5 +1,20 @@
 const { Users } = require('../../../models');
 
+const users = [
+  { id: 1, email: "user1@gmail.com", password: "password123" },
+  { id: 2, email: "user2@gmail.com", password: "password456" },
+  { id: 3, email: "user3@gmail.com", password: "password789" },
+  // Tambahkan lebih banyak data di sini
+];
+
+const getUsers = (offset = 0, limit = 10) => {
+  return users.slice(offset, offset + limit);
+};
+
+const getUserByEmail = (email) => {
+  return users.find(user => user.email === email);
+};
+
 async function getUsers() {
   return Users.find({});
 }
